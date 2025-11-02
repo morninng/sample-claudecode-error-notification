@@ -14,6 +14,8 @@
  - api serverのログをcloud logにて取得する。
  - cloud logで取得したログのうち、errorのみをCloud Logging Sinkを用いて、pubsubで、log analysis serverに通知する
  - log analysis serverは、ログをslackで通知し、claude codeへの解析を行い、再度解析結果をslackに通知する
+  - log analysis serverはin はapi serverのみ、
+  - api serverはpublic accessibleとする。 
 
 
  - cloud run(api server) -> Cloud Logging Sink → Pub/Sub → Cloud Run（Log Analysis Server）を経由してログを収集・解析する
