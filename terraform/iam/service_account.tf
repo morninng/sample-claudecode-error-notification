@@ -23,3 +23,10 @@ resource "google_project_iam_member" "log_analysis_pubsub_subscriber" {
   role    = "roles/pubsub.subscriber"
   member  = "serviceAccount:${google_service_account.log_analysis_server.email}"
 }
+
+# Grant Secret Manager accessor role to log analysis server
+resource "google_project_iam_member" "log_analysis_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.log_analysis_server.email}"
+}

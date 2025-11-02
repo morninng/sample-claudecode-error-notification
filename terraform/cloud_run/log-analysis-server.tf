@@ -16,7 +16,12 @@ resource "google_cloud_run_service" "log_analysis_server" {
 
         env {
           name  = "SLACK_BOT_TOKEN"
-          value = var.slack_bot_token
+          value_from {
+            secret_key_ref {
+              name = data.google_secret_manager_secret_version.slack_bot_token.secret
+              key  = "latest"
+            }
+          }
         }
 
         env {
@@ -26,12 +31,22 @@ resource "google_cloud_run_service" "log_analysis_server" {
 
         env {
           name  = "ANTHROPIC_API_KEY"
-          value = var.anthropic_api_key
+          value_from {
+            secret_key_ref {
+              name = data.google_secret_manager_secret_version.anthropic_api_key.secret
+              key  = "latest"
+            }
+          }
         }
 
         env {
           name  = "GITHUB_TOKEN"
-          value = var.github_token
+          value_from {
+            secret_key_ref {
+              name = data.google_secret_manager_secret_version.github_token.secret
+              key  = "latest"
+            }
+          }
         }
 
         env {

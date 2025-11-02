@@ -93,10 +93,11 @@ api-server/
 5. claude codeから取得したデータを 3.のthread_tsに対して、slack通知をスレッドとして付与する。
 
 - **環境変数**
- - SLACK_BOT_TOKEN
- - SLACK_CHANNEL
- - GITHUB_REPOSITORY
- - GITHUB_TOKEN
+ - SLACK_BOT_TOKEN (GCP Secret Managerから取得)
+ - SLACK_CHANNEL (Terraform変数から設定)
+ - ANTHROPIC_API_KEY (GCP Secret Managerから取得)
+ - GITHUB_REPOSITORY (Terraform変数から設定)
+ - GITHUB_TOKEN (GCP Secret Managerから取得)
 
 - **使用技術**
 - Go (net/http)
@@ -123,6 +124,8 @@ terraform/
 ├── main.tf
 ├── variables.tf
 ├── outputs.tf
+├── secrets.tf              # GCP Secret Manager設定
+├── SECRETS_SETUP.md        # Secret Managerセットアップガイド
 ├── cloud_run/
 │   ├── api-server.tf
 │   └── log-analysis-server.tf
@@ -148,28 +151,64 @@ google_cloud_run_service
 
 google_service_account
 
-環境変数設定例
+## セキュリティ設定
 
+### GCP Secret Manager
+機密情報は GCP Secret Manager に保存し、Terraform の変数ファイルには含めない。
+
+**必須シークレット:**
+- `slack-bot-token`: Slack Bot OAuth Token
+- `anthropic-api-key`: Anthropic API Key for Claude
+- `github-token`: GitHub Personal Access Token
+
+詳細は `terraform/SECRETS_SETUP.md` を参照。
+
+### 環境変数設定例
+
+機密情報は Secret Manager から注入:
+```hcl
 env {
   name  = "SLACK_BOT_TOKEN"
-  value = var.slack_bot_token
+  value_from {
+    secret_key_ref {
+      name = data.google_secret_manager_secret_version.slack_bot_token.secret
+      key  = "latest"
+    }
+  }
 }
 env {
   name  = "ANTHROPIC_API_KEY"
-  value = var.anthropic_api_key
+  value_from {
+    secret_key_ref {
+      name = data.google_secret_manager_secret_version.anthropic_api_key.secret
+      key  = "latest"
+    }
+  }
 }
 env {
   name  = "GITHUB_TOKEN"
-  value = var.github_token
+  value_from {
+    secret_key_ref {
+      name = data.google_secret_manager_secret_version.github_token.secret
+      key  = "latest"
+    }
+  }
 }
+```
 
+非機密情報は Terraform 変数から設定:
+```hcl
 env {
   name  = "GITHUB_REPOSITORY"
   value = var.github_repository
 }
-
-
 env {
   name  = "SLACK_CHANNEL"
-  value = "#alert"
+  value = var.slack_channel
 }
+```
+
+### IAM権限
+log-analysis-server のサービスアカウントには以下の権限が必要:
+- `roles/pubsub.subscriber`: Pub/Sub からメッセージを受信
+- `roles/secretmanager.secretAccessor`: Secret Manager からシークレットを読み取り

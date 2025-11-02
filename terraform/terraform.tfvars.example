@@ -3,16 +3,15 @@ project_id = "your-gcp-project-id"
 region     = "asia-northeast1"
 
 # Slack Configuration
-slack_bot_token = "xoxb-your-slack-bot-token"
-slack_channel   = "#alert"
-
-# Anthropic Configuration
-anthropic_api_key = "sk-ant-your-anthropic-api-key"
+slack_channel = "#alert"
 
 # GitHub Configuration
-github_token      = "ghp_your-github-personal-access-token"
 github_repository = "owner/repo-name"
 
 # Docker Images
 api_server_image          = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/api-server:latest"
 log_analysis_server_image = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/log-analysis-server:latest"
+
+# Note: Sensitive values (slack_bot_token, anthropic_api_key, github_token)
+# are stored in GCP Secret Manager and must be created before running terraform apply.
+# See SECRETS_SETUP.md for instructions on creating these secrets.

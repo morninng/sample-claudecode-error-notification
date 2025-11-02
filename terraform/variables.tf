@@ -9,28 +9,10 @@ variable "region" {
   default     = "asia-northeast1"
 }
 
-variable "slack_bot_token" {
-  description = "Slack Bot Token"
-  type        = string
-  sensitive   = true
-}
-
 variable "slack_channel" {
   description = "Slack Channel for notifications"
   type        = string
   default     = "#alert"
-}
-
-variable "anthropic_api_key" {
-  description = "Anthropic API Key for Claude"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_token" {
-  description = "GitHub Personal Access Token"
-  type        = string
-  sensitive   = true
 }
 
 variable "github_repository" {

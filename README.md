@@ -121,7 +121,36 @@ docker build -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/docker-repo/log-analy
 docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/docker-repo/log-analysis-server:latest
 ```
 
-### 6. Deploy with Terraform
+### 6. Set up GCP Secret Manager
+
+Before deploying with Terraform, create the required secrets in GCP Secret Manager:
+
+```bash
+cd terraform
+
+# Enable Secret Manager API
+gcloud services enable secretmanager.googleapis.com
+
+# Create secrets (replace with your actual values)
+echo -n "xoxb-your-slack-bot-token" | \
+  gcloud secrets create slack-bot-token \
+  --data-file=- \
+  --replication-policy="automatic"
+
+echo -n "sk-ant-your-anthropic-api-key" | \
+  gcloud secrets create anthropic-api-key \
+  --data-file=- \
+  --replication-policy="automatic"
+
+echo -n "ghp_your-github-token" | \
+  gcloud secrets create github-token \
+  --data-file=- \
+  --replication-policy="automatic"
+```
+
+For detailed instructions, see [terraform/SECRETS_SETUP.md](terraform/SECRETS_SETUP.md).
+
+### 7. Deploy with Terraform
 
 ```bash
 cd terraform
@@ -130,14 +159,14 @@ cd terraform
 cat > terraform.tfvars <<EOF
 project_id                 = "your-gcp-project-id"
 region                     = "asia-northeast1"
-slack_bot_token            = "xoxb-your-slack-bot-token"
 slack_channel              = "#alert"
-anthropic_api_key          = "sk-ant-your-anthropic-key"
-github_token               = "ghp_your-github-token"
 github_repository          = "owner/repo-name"
 api_server_image           = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/api-server:latest"
 log_analysis_server_image  = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/log-analysis-server:latest"
 EOF
+
+# Note: Sensitive values (slack_bot_token, anthropic_api_key, github_token)
+# are now stored in GCP Secret Manager, not in terraform.tfvars
 
 # Initialize Terraform
 terraform init
@@ -149,7 +178,7 @@ terraform plan
 terraform apply
 ```
 
-### 7. Test the System
+### 8. Test the System
 
 ```bash
 # Get the API server URL
@@ -180,13 +209,15 @@ curl "$API_URL/hello?message=error"
 
 ### log-analysis-server
 
-| Variable | Description |
-|----------|-------------|
-| `SLACK_BOT_TOKEN` | Slack Bot User OAuth Token |
-| `SLACK_CHANNEL` | Slack channel for notifications (e.g., #alert) |
-| `ANTHROPIC_API_KEY` | Anthropic API key for Claude |
-| `GITHUB_TOKEN` | GitHub Personal Access Token |
-| `GITHUB_REPOSITORY` | GitHub repository in format "owner/repo" |
+| Variable | Description | Source |
+|----------|-------------|--------|
+| `SLACK_BOT_TOKEN` | Slack Bot User OAuth Token | GCP Secret Manager (`slack-bot-token`) |
+| `SLACK_CHANNEL` | Slack channel for notifications (e.g., #alert) | Terraform variable |
+| `ANTHROPIC_API_KEY` | Anthropic API key for Claude | GCP Secret Manager (`anthropic-api-key`) |
+| `GITHUB_TOKEN` | GitHub Personal Access Token | GCP Secret Manager (`github-token`) |
+| `GITHUB_REPOSITORY` | GitHub repository in format "owner/repo" | Terraform variable |
+
+**Security Note**: Sensitive credentials (`SLACK_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`) are stored in GCP Secret Manager and injected into Cloud Run at runtime. They are never stored in Terraform files or version control.
 
 ## Cleanup
 
