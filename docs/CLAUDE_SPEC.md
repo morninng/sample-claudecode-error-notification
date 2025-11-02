@@ -36,11 +36,13 @@ monorepo/
 - **Cloud Run: api-server**
   → API server
 - **Cloud Logging Sink**  
-  → 特定ログ（例: エラーログ、警告ログ）のみをfilterし **Pub/Sub Topic** にエクスポート
+  → 特定ログ（severity >= ERROR）のみをfilterし **Pub/Sub Topic** にエクスポート
 - **Pub/Sub Topic**
   → Cloud Run（log-analysis-server）がサブスクライブ
 - **Cloud Run: log-analysis-server**
   → 受信したログを解析し、Slack に通知、または Claude Code に渡して構造解析
+- **Region**
+  asia-northeast1
 
 ---
 
@@ -52,6 +54,10 @@ monorepo/
   | メソッド | パス | 機能 |
   |-----------|------|------|
   | GET | `/hello` | シンプルなhello worldを返すだけのapi |
+- **動作詳細**
+ /hello?messag=error で "error occured with invalid query message" status code 400を返す
+ それ以外では常に hello worldをstatus code 200で返す
+
 - **使用技術**
   - Go (Echo)
   - Cloud Run (containerized)
@@ -70,13 +76,23 @@ api-server/
 - **処理**
 1. Cloud LoggingからPub/Sub Push エンドポイントでログ受信
 2. 受信したデータをJSON 構造を解析
-3. error logを受信し、環境変数SLACK_WEBHOOK_URLを用いてSlack 通知を行い、thread_tsを取得
+3. error logを受信し、環境変数SLACK_BOT_TOKENを用いてSlackのSLACK_CHANNELに通知を行い、thread_tsを取得
+  -     Slack Notifier は chat.postMessage
+    https://docs.slack.dev/reference/methods/chat.postMessage/
+   thread_tsに関してはこちらを参照
+
 4. github上のコードを環境変数のGITHUB_REPOSITORYとGITHUB_TOKENを用いて取得する。
 5. github上のコードと、error logを用いてpromptを生成し、claude code apiに送信
+　https://docs.claude.com/en/api/messages
+　claude codeにはこちらのapiにあるmessage機能を用いてください
+
+  githubのcodeに関しては全コードを送信してください
+　
 5. claude codeから取得したデータを 3.のthread_tsに対して、slack通知をスレッドとして付与する。
 
 - **環境変数**
- - SLACK_WEBHOOK_URL
+ - SLACK_BOT_TOKEN
+ - SLACK_CHANNEL
  - GITHUB_REPOSITORY
  - GITHUB_TOKEN
 
@@ -133,8 +149,8 @@ google_service_account
 環境変数設定例
 
 env {
-  name  = "SLACK_WEBHOOK_URL"
-  value = var.slack_webhook_url
+  name  = "SLACK_BOT_TOKEN"
+  value = var.slack_bot_token
 }
 env {
   name  = "ANTHROPIC_API_KEY"
@@ -150,3 +166,8 @@ env {
   value = var.github_repository
 }
 
+
+env {
+  name  = "SLACK_CHANNEL"
+  value = "#alert"
+}
