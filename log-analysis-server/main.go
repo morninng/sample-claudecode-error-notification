@@ -36,8 +36,8 @@ type LogEntry struct {
 }
 
 type SlackMessage struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text"`
+	Channel  string `json:"channel"`
+	Text     string `json:"text"`
 	ThreadTS string `json:"thread_ts,omitempty"`
 }
 
