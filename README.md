@@ -50,17 +50,23 @@ log-analysis-server (Cloud Run)
 ├── log-analysis-server/  # Log analysis and notification (Go)
 │   ├── main.go
 │   ├── go.mod
-│   └── Dockerfile
+│   ├── Dockerfile
+│   ├── LOCAL_DEVELOPMENT.md  # Local testing guide
+│   └── test-pubsub.sh        # Local test script
 ├── terraform/            # Infrastructure as Code
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
+│   ├── secrets.tf
+│   ├── SECRETS_SETUP.md
 │   ├── cloud_run/
 │   ├── pubsub/
 │   ├── logging_sink/
 │   └── iam/
 └── docs/                 # Documentation
 ```
+
+**Note**: For local development and testing of log-analysis-server before deployment, see [log-analysis-server/LOCAL_DEVELOPMENT.md](log-analysis-server/LOCAL_DEVELOPMENT.md).
 
 ## Setup Instructions
 
