@@ -1,16 +1,16 @@
 # GCP Configuration
-project_id = "your-gcp-project-id"
+project_id = "infcurion-demo"
 region     = "asia-northeast1"
 
 # Slack Configuration
 slack_channel = "#alert"
 
 # GitHub Configuration
-github_repository = "owner/repo-name"
+github_repository = "morninng/sample-claudecode-error-notification"
 
 # Docker Images
-api_server_image          = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/api-server:latest"
-log_analysis_server_image = "asia-northeast1-docker.pkg.dev/your-project/docker-repo/log-analysis-server:latest"
+api_server_image          = "asia-northeast1-docker.pkg.dev/infcurion-demo/claude-notifier/api-server:v0.0.1"
+log_analysis_server_image = "asia-northeast1-docker.pkg.dev/infcurion-demo/claude-notifier/log-analysis-server:v0.0.1"
 
 # Note: Sensitive values (slack_bot_token, anthropic_api_key, github_token)
 # are stored in GCP Secret Manager and must be created before running terraform apply.

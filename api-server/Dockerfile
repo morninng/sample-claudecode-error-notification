@@ -2,10 +2,10 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY ./api-server/go.mod ./api-server/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY ./api-server/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o api-server .
 
 FROM alpine:latest

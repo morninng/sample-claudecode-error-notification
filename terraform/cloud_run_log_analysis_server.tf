@@ -67,7 +67,7 @@ resource "google_cloud_run_service" "log_analysis_server" {
 
     metadata {
       annotations = {
-        "autoscaling.knative.dev/maxScale" = "5"
+        "autoscaling.knative.dev/maxScale" = "1"
         "autoscaling.knative.dev/minScale" = "0"
       }
     }

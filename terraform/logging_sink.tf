@@ -4,7 +4,8 @@ resource "google_logging_project_sink" "error_logs_sink" {
   destination = "pubsub.googleapis.com/projects/${var.project_id}/topics/${google_pubsub_topic.error_logs.name}"
 
   # Filter for ERROR severity logs
-  filter = "severity >= ERROR"
+  # Captures both standard severity field and Echo framework's jsonPayload.level field
+  filter = "severity >= ERROR OR jsonPayload.level=\"ERROR\""
 
   # Use unique writer identity
   unique_writer_identity = true

@@ -79,13 +79,23 @@ func main() {
 }
 
 func handlePubSubPush(w http.ResponseWriter, r *http.Request) {
+	log.Println("handlePubSubPush 2")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Read the entire body for debugging
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading request body: %v", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Received Pub/Sub message body: %s", string(bodyBytes))
+
 	var pubsubMsg PubSubMessage
-	if err := json.NewDecoder(r.Body).Decode(&pubsubMsg); err != nil {
+	if err := json.Unmarshal(bodyBytes, &pubsubMsg); err != nil {
 		log.Printf("Error decoding Pub/Sub message: %v", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
@@ -98,11 +108,15 @@ func handlePubSubPush(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Decoded log entry data: %s", string(data))
 
-	// Parse log entry
+	// Parse log entry with more flexible JSON unmarshaling
 	var logEntry LogEntry
-	if err := json.Unmarshal(data, &logEntry); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber() // Use json.Number instead of float64 for better parsing
+	if err := decoder.Decode(&logEntry); err != nil {
 		log.Printf("Error parsing log entry: %v", err)
+		log.Printf("Raw data that failed to parse: %s", string(data))
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -117,6 +131,7 @@ func handlePubSubPush(w http.ResponseWriter, r *http.Request) {
 }
 
 func processErrorLog(logEntry LogEntry) {
+	log.Println("processErrorLog")
 	// 1. Send Slack notification and get thread_ts
 	threadTS, err := sendSlackNotification(logEntry)
 	if err != nil {
@@ -154,6 +169,7 @@ func processErrorLog(logEntry LogEntry) {
 }
 
 func sendSlackNotification(logEntry LogEntry) (string, error) {
+	log.Println("sendSlackNotification")
 	slackToken := os.Getenv("SLACK_BOT_TOKEN")
 	slackChannel := os.Getenv("SLACK_CHANNEL")
 
@@ -205,6 +221,7 @@ func sendSlackNotification(logEntry LogEntry) (string, error) {
 }
 
 func getGitHubCode() (string, error) {
+	log.Println("getGitHubCode")
 	githubToken := os.Getenv("GITHUB_TOKEN")
 	githubRepo := os.Getenv("GITHUB_REPOSITORY")
 
@@ -293,6 +310,7 @@ func shouldSkipFile(path string) bool {
 }
 
 func analyzeWithClaude(logEntry LogEntry, repoCode string) (string, error) {
+	log.Println("analyzeWithClaude")
 	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
 	if anthropicKey == "" {
 		return "", fmt.Errorf("ANTHROPIC_API_KEY not set")
@@ -314,7 +332,10 @@ Please analyze this error and provide:
 2. Which part of the code is causing this issue
 3. Suggested fix
 
-Keep your response concise and actionable.`,
+Keep your response concise and actionable.
+
+please write your response in Japanese
+`,
 		logEntry.Severity,
 		logEntry.Timestamp,
 		logEntry.TextPayload,
@@ -374,6 +395,7 @@ Keep your response concise and actionable.`,
 }
 
 func sendSlackThreadReply(threadTS, message string) error {
+	log.Println("sendSlackThreadReply")
 	slackToken := os.Getenv("SLACK_BOT_TOKEN")
 	slackChannel := os.Getenv("SLACK_CHANNEL")
 

@@ -2,10 +2,10 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY ./log-analysis-server/go.mod ./log-analysis-server/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY ./log-analysis-server .
 RUN CGO_ENABLED=0 GOOS=linux go build -o log-analysis-server .
 
 FROM alpine:latest
