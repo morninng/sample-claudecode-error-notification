@@ -177,11 +177,29 @@ func sendSlackNotification(logEntry LogEntry) (string, error) {
 		return "", fmt.Errorf("SLACK_BOT_TOKEN or SLACK_CHANNEL not set")
 	}
 
+	// Extract severity and message from either standard fields or jsonPayload
+	severity := logEntry.Severity
+	message := logEntry.TextPayload
+
+	// If severity is empty, try to get it from jsonPayload.level
+	if severity == "" && logEntry.JsonPayload != nil {
+		if level, ok := logEntry.JsonPayload["level"].(string); ok {
+			severity = level
+		}
+	}
+
+	// If message is empty, try to get it from jsonPayload.message
+	if message == "" && logEntry.JsonPayload != nil {
+		if msg, ok := logEntry.JsonPayload["message"].(string); ok {
+			message = msg
+		}
+	}
+
 	// Format log message
 	logText := fmt.Sprintf("*Error Log Detected*\n```\nSeverity: %s\nTimestamp: %s\nPayload: %s\n```",
-		logEntry.Severity,
+		severity,
 		logEntry.Timestamp,
-		logEntry.TextPayload)
+		message)
 
 	slackMsg := SlackMessage{
 		Channel: slackChannel,
@@ -316,6 +334,24 @@ func analyzeWithClaude(logEntry LogEntry, repoCode string) (string, error) {
 		return "", fmt.Errorf("ANTHROPIC_API_KEY not set")
 	}
 
+	// Extract severity and message from either standard fields or jsonPayload
+	severity := logEntry.Severity
+	message := logEntry.TextPayload
+
+	// If severity is empty, try to get it from jsonPayload.level
+	if severity == "" && logEntry.JsonPayload != nil {
+		if level, ok := logEntry.JsonPayload["level"].(string); ok {
+			severity = level
+		}
+	}
+
+	// If message is empty, try to get it from jsonPayload.message
+	if message == "" && logEntry.JsonPayload != nil {
+		if msg, ok := logEntry.JsonPayload["message"].(string); ok {
+			message = msg
+		}
+	}
+
 	// Create prompt
 	prompt := fmt.Sprintf(`You are a software engineer analyzing an error log from a production system.
 
@@ -336,9 +372,9 @@ Keep your response concise and actionable.
 
 please write your response in Japanese
 `,
-		logEntry.Severity,
+		severity,
 		logEntry.Timestamp,
-		logEntry.TextPayload,
+		message,
 		repoCode)
 
 	claudeReq := ClaudeRequest{
